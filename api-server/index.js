@@ -1,6 +1,10 @@
 import express from "express";
 import { ECSClient, RunTaskCommand } from "@aws-sdk/client-ecs";
 import { generate } from "random-words";
+import dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
 
 const app = express();
 app.use(express.json());

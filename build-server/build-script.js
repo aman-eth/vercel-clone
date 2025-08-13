@@ -3,6 +3,11 @@ const fs = require('fs');
 const path = require('path');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 
+const dotenv = require("dotenv")
+
+// Load environment variables from .env file
+dotenv.config();
+
 // Get environment variables
 const SLUG = process.env.SLUG;
 const S3_BUCKET_NAME = process.env.AWS_BUCKET_NAME;
