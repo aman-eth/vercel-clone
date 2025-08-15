@@ -34,14 +34,44 @@ A complete Vercel-like deployment platform with a modern Next.js frontend, API s
                     └─────────────────┘
 ```
 
+## 🛠️ Key Technologies & AWS Services
+
+### **AWS ECS (Elastic Container Service)**
+- **Purpose**: Container orchestration for build processes
+- **Usage**: Runs Docker containers for each deployment
+- **Learning Value**: Task definitions, auto-scaling, container management
+
+### **AWS ECR (Elastic Container Registry)**
+- **Purpose**: Store and manage Docker images
+- **Usage**: Hosts the build-server container image
+- **Learning Value**: Container image lifecycle management
+
+### **AWS S3 (Simple Storage Service)**
+- **Purpose**: Store built static files
+- **Usage**: Hosts deployed application assets
+- **Learning Value**: Object storage, bucket policies, static hosting
+
+### **Redis Pub/Sub**
+- **Purpose**: Real-time log streaming
+- **Usage**: WebSocket communication for build logs
+- **Learning Value**: Event-driven architecture, real-time systems
+
+### **Docker Containerization**
+- **Purpose**: Package build environment
+- **Usage**: Consistent build environment across deployments
+- **Learning Value**: Container orchestration, image building
+
 ## 📁 Project Structure
 
 ```
 vercel-clone/
-├── frontend/           # Next.js frontend application
-├── api-server/         # Express API server with WebSocket
-├── build-server/       # Docker build server
-├── reverse-proxy/      # Express reverse proxy
+├── frontend/           # Next.js frontend with shadcn/ui
+├── api-server/         # Express API with WebSocket support
+├── build-server/       # Docker container for building apps
+│   ├── Dockerfile      # Container image definition
+│   ├── build-script.js # Build logic and S3 upload
+│   └── README.md       # ECR deployment instructions
+├── reverse-proxy/      # Express proxy for serving apps
 └── socket-client/      # WebSocket client example
 ```
 
@@ -83,12 +113,56 @@ S3_BASE_PATH=https://your-s3-bucket.s3.your-region.amazonaws.com/
 
 ### 2. Build Server Configuration
 
-Ensure your AWS ECS task definition is configured to:
-- Use the build server Docker image
-- Accept `REPO_URL` and `SLUG` environment variables
-- Have proper IAM permissions for S3 access
+The build server is a Docker container that needs to be deployed to AWS ECR:
+
+1. **Build and Push to ECR:**
+   ```bash
+   cd build-server
+   docker build -t build-server .
+   docker tag build-server:latest your-account-id.dkr.ecr.your-region.amazonaws.com/build-server:latest
+   docker push your-account-id.dkr.ecr.your-region.amazonaws.com/build-server:latest
+   ```
+
+2. **ECS Task Definition Requirements:**
+   - Reference the ECR image: `your-account-id.dkr.ecr.your-region.amazonaws.com/build-server:latest`
+   - Set required environment variables (see build-server/README.md for details)
+   - Configure proper IAM roles for S3 and ECR access
+   - Set up VPC networking with public IP assignment
+
+3. **Required Environment Variables for Build Server:**
+   - `AWS_REGION` - AWS region
+   - `AWS_ACCESS_KEY_ID` - AWS access key
+   - `AWS_SECRET_ACCESS_KEY` - AWS secret key
+   - `REDIS_URI` - Redis connection string
+   - `AWS_BUCKET_NAME` - S3 bucket name
+   - `REPO_URL` - GitHub repository URL (set by API server)
+   - `SLUG` - Unique deployment identifier (set by API server)
 
 ## 🚀 Quick Start
+
+### Prerequisites
+
+Before starting the services, you need to set up the AWS infrastructure:
+
+1. **Deploy Build Server to ECR:**
+   ```bash
+   cd build-server
+   
+   # Authenticate to ECR
+   aws ecr get-login-password --region your-region | docker login --username AWS --password-stdin your-account-id.dkr.ecr.your-region.amazonaws.com
+   
+   # Build and push Docker image
+   docker build -t build-server .
+   docker tag build-server:latest your-account-id.dkr.ecr.your-region.amazonaws.com/build-server:latest
+   docker push your-account-id.dkr.ecr.your-region.amazonaws.com/build-server:latest
+   ```
+
+2. **Create ECS Task Definition:**
+   - Use the build server image from ECR
+   - Configure required environment variables
+   - Set up proper IAM roles and permissions
+
+3. **Set up environment variables** (see Environment Setup section below)
 
 ### Option 1: Start All Services (Recommended)
 
@@ -218,7 +292,8 @@ The reverse proxy:
 3. **Build Server Issues**
    - Check ECS task logs
    - Verify S3 permissions
-   - Ensure Docker image is accessible
+   - Ensure Docker image is accessible from ECR
+   - Verify ECR image is properly pushed and tagged
 
 4. **Reverse Proxy Not Working**
    - Check S3 bucket configuration
