@@ -1,16 +1,22 @@
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+import { execSync } from 'child_process'
+import fs from 'fs'
+import path from 'path'
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import Redis from "ioredis"
 
-const dotenv = require("dotenv")
-
-// Load environment variables from .env file
+import dotenv from "dotenv"
 dotenv.config();
+
+const publisher = new Redis(process.env.REDIS_URI);
 
 // Get environment variables
 const SLUG = process.env.SLUG;
 const S3_BUCKET_NAME = process.env.AWS_BUCKET_NAME;
+
+
+export function logLine(slug, message) {
+  publisher.publish(`logs:${slug}`, message);
+}
 
 
 // Initialize S3 client with credentials
@@ -36,6 +42,7 @@ async function uploadFileToS3(filePath, key) {
   
   await s3Client.send(command);
   console.log(`Uploaded: ${key}`);
+  logLine(SLUG, `Uploaded: ${key}`);
 }
 
 // Function to get content type based on file extension
@@ -76,28 +83,37 @@ async function uploadDirectoryToS3(dirPath, s3Prefix) {
       await uploadFileToS3(filePath, key);
     }
   }
+  logLine(SLUG, "Upload completed successfully!");
 }
 
 
 (async () => {
   try {
+    logLine(SLUG, "Repo cloned...");
     // Install dependencies
     console.log('Installing dependencies...');
+    logLine(SLUG, "Installing dependencies...");
     execSync('npm ci', { stdio: 'inherit' });
+
+    // TRY TO STREAM THESE LOGS ALSO
 
     // Build the project
     console.log('Building project...');
+    logLine(SLUG, "Building project...");
     execSync('npm run build', { stdio: 'inherit' });
 
     console.log('Build completed successfully.');
+    logLine(SLUG, "Build completed successfully.");
 
     // Check if dist directory exists
     if (!fs.existsSync('dist')) {
       console.error('Error: dist directory not found after build');
+      logLine(SLUG, "Error: dist directory not found after build");
       process.exit(1);
     }
 
     console.log('Uploading dist folder to S3...');
+    logLine(SLUG, "Uploading dist folder to S3...");
     
     const s3Prefix = `${SLUG}/`;
     
@@ -105,9 +121,11 @@ async function uploadDirectoryToS3(dirPath, s3Prefix) {
     await uploadDirectoryToS3('dist', s3Prefix);
     
     console.log('Upload completed successfully!');
-
+    logLine(SLUG, "Upload completed successfully!");
+    process.exit(1)
   } catch (error) {
     console.error('Build process failed:', error.message);
+    logLine(SLUG, 'Build process failed: '+ error.message);
     process.exit(1);
   }
 })();

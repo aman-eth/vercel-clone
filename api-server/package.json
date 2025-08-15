@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -13,6 +14,8 @@
     "@aws-sdk/client-ecs": "^3.864.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
-    "random-words": "^2.0.1"
+    "ioredis": "^5.7.0",
+    "random-words": "^2.0.1",
+    "socket.io": "^4.8.1"
   }
 }
