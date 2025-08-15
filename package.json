@@ -1,0 +1,30 @@
+{
+  "name": "vercel-clone",
+  "version": "1.0.0",
+  "description": "A Vercel clone with Next.js frontend, API server, build server, and reverse proxy",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:proxy\" \"npm run dev:frontend\"",
+    "dev:api": "cd api-server && npm start",
+    "dev:proxy": "cd reverse-proxy && npm start",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:all": "npm install && cd api-server && npm install && cd ../reverse-proxy && npm install && cd ../frontend && npm install",
+    "build:frontend": "cd frontend && npm run build",
+    "start:all": "concurrently \"npm run start:api\" \"npm run start:proxy\" \"npm run start:frontend\"",
+    "start:api": "cd api-server && npm start",
+    "start:proxy": "cd reverse-proxy && npm start",
+    "start:frontend": "cd frontend && npm start"
+  },
+  "keywords": [
+    "vercel",
+    "deployment",
+    "nextjs",
+    "react",
+    "docker",
+    "aws"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

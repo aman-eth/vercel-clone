@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import { ECSClient, RunTaskCommand } from "@aws-sdk/client-ecs";
 import { generate } from "random-words";
 import dotenv from "dotenv";
@@ -11,6 +12,7 @@ import Redis from "ioredis";
 dotenv.config();
 
 const app = express();
+app.use(cors())
 app.use(express.json());
 
 // Wrap Express in HTTP server for Socket.io
